@@ -42,10 +42,6 @@ video-path=d:\\aaa\\
 ### 构建和运行
 
 1. 克隆项目到本地：
-    ```bash
-    git clone https://github.com/your_username/your_repository.git
-    cd your_repository
-    ```
 
 2. 使用 Maven 构建项目：
     ```bash
@@ -56,6 +52,7 @@ video-path=d:\\aaa\\
     ```bash
     mvn spring-boot:run
     ```
+
 
 ### 静态资源映射
 
