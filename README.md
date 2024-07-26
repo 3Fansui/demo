@@ -1,3 +1,4 @@
+
 # 简易版视频网站
 
 这是一个使用 Java 和 Spring Boot 构建的简易版视频网站项目。
@@ -34,10 +35,9 @@ spring.datasource.url=jdbc:mysql://localhost:3306/your_database_name
 spring.datasource.username=your_database_username
 spring.datasource.password=your_database_password
 
-
 # 视频文件存储路径
 video-path=d:\\aaa\\
-
+```
 
 ### 构建和运行
 
@@ -52,7 +52,6 @@ video-path=d:\\aaa\\
     ```bash
     mvn spring-boot:run
     ```
-
 
 ### 静态资源映射
 
