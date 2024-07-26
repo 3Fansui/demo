@@ -1,4 +1,3 @@
-```markdown
 # 简易版视频网站
 
 这是一个使用 Java 和 Spring Boot 构建的简易版视频网站项目。
@@ -38,7 +37,7 @@ spring.datasource.password=your_database_password
 
 # 视频文件存储路径
 video-path=d:\\aaa\\
-```
+
 
 ### 构建和运行
 
