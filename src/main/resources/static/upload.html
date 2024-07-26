@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发布视频</title>
+    <style>
+        video {
+            border: 1px solid black;
+            margin-right: 2px;
+        }
+
+        div#preview {
+            height: 92px;
+            margin-top:5px;
+        }
+
+        div.preview {
+            width: 160px;
+            height: 90px;
+            border: 1px solid black;
+            margin-right: 2px;
+            position: relative;
+            float: left;
+        }
+
+        img {
+            width: 100%;
+        }
+
+        img.cover {
+            width: 160px;
+        }
+
+        div.clear {
+            clear: both;
+        }
+
+        div.mask {
+            height: 90px;
+            background-color: rgba(0, 255, 0, .2);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 90px;
+            cursor: pointer;
+        }
+        table td.c1 {
+            width: 160px;
+        }
+        table td.c2 {
+            width: 160px;
+        }
+    </style>
+</head>
+
+<body>
+<input type="file" multiple id="file" accept=".mp4">
+<div id="preview"></div>
+<div class="clear"></div>
+<hr>
+<div>
+    <form id="form">
+        <table>
+            <tbody>
+            <tr>
+                <td class="c1">标题:</td>
+                <td class="c2"><input name="title"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="c1">类型:</td>
+                <td class="c2"><input name="type" type="radio" value="自制" checked> 自制 <input name="type" type="radio" value="转载"> 转载</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="c1">分区:</td>
+                <td class="c2"><input name="category" value="科技->计算机"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="c1">封面:</td>
+                <td class="c2"><img src="data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=" class="cover"> </td>
+                <td><input name="cover" readonly size="40"></td>
+            </tr>
+            <tr>
+                <td class="c1">标签:</td>
+                <td class="c2"><input name="tags" readonly id="tags"> </td>
+                <td><input type="text" id="inputTag"></td>
+            </tr>
+            <tr>
+                <td class="c1">简介:</td>
+                <td class="c2"><textarea name="introduction" cols="22" rows="2">随便的简介...</textarea></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <input type="button" value="发布" id="publish" disabled>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+<script src="js/spark-md5.min.js"></script>
+<script>
+        const publish = document.getElementById("publish");
+        const input = document.querySelector("input[type=file]");
+        const preview = document.getElementById("preview");
+        const chunkSize = 1024 * 1024 * 8;
+        const img = document.querySelector(".cover");
+        const imgvalue = document.querySelector("input[name=cover]");
+        let parts = [];
+        let covers = [];
+        let selectCover = null;
+
+        input.addEventListener("change", async () => {
+            parts = [];
+            covers = [];
+            selectCover = null;
+            preview.innerHTML = "";
+            img.src = "";
+            imgvalue.value = "";
+            for (let j = 0; j < input.files.length; j++) {
+                let file = input.files[j];
+
+                // 每个选集的 md5
+                let chunks = Math.ceil(file.size / chunkSize);
+                let spark = new SparkMD5.ArrayBuffer();
+                for (let i = 0, start = 0; i < chunks; i++, start += chunkSize) {
+                    let end = Math.min(file.size, start + chunkSize);
+                    // console.log('read chunk nr', i + 1, 'of', chunks, start, end);
+                    let data = await readFile(file.slice(start, end));
+                    spark.append(data);
+                }
+                const md5 = spark.end() + ".mp4";
+                let video = await readVideo(file);
+                parts.push({ url: md5, title: file.name, id: 'P' + (j + 1), duration: format(video.duration) });
+
+                // 每个选集的预览
+                const blob = await readBlob(video);
+                createPartPreview(blob, md5, j, parts[j]);
+                
+                // 截取选集的第一帧作为封面候选
+                const buf = await new Response(blob).arrayBuffer();
+                covers.push({blob:blob, cover: new SparkMD5.ArrayBuffer().append(buf).end() + ".png"});
+            }
+
+            // 上传选集
+            for (let j = 0; j < input.files.length; j++) {
+                let file = input.files[j];
+                let chunks = Math.ceil(file.size / chunkSize);
+                for (let i = 0, start = 0; i < chunks; i++, start += chunkSize) {
+                    let end = Math.min(file.size, start + chunkSize);
+                    let json = await upload(file.slice(start, end), (i + 1), chunks, parts[j]);
+                    process(json)
+                }
+                await finish(chunks, parts[j]);
+            }
+
+            // 上传封面(默认第一个选集的第一帧作为封面)
+            if(covers.length > 0) {
+                showAndUploadCover(0);
+            }
+            publish.disabled = !(input.files.length > 0)
+        });
+
+        async function showAndUploadCover(j) {
+            const objectUrl = URL.createObjectURL(covers[j].blob);
+            img.onload = () => URL.revokeObjectURL(objectUrl);
+            img.src = objectUrl;
+
+            let json = await uploadCover(covers[j].blob, covers[j].cover);
+            imgvalue.value = json.cover;
+        }
+
+        function createPartPreview(blob, md5, j, part) {
+            const div1 = document.createElement("div");
+            div1.className = "preview";
+            const div2 = document.createElement("div");
+            div2.className = "mask";
+            div2.id = md5;
+            div2.onclick = () => {
+                showAndUploadCover(j);
+            }
+            div2.title = part.title + " " + part.duration;
+            const img = document.createElement("img");
+            const objectUrl = URL.createObjectURL(blob);
+            img.onload = () => URL.revokeObjectURL(objectUrl);
+            img.src = objectUrl;
+
+            div1.appendChild(img);
+            div1.appendChild(div2);
+            preview.appendChild(div1);
+        }
+
+        async function finish(chunks, part) {
+            const form = new FormData();
+            form.append("chunks", chunks);
+            form.append("id", part.id);
+            form.append("title", part.title);
+            form.append("url", part.url);
+            form.append("duration", part.duration);
+
+            const resp = await fetch("http://localhost:8080/finish", {
+                method: "post",
+                body: form
+            })
+        }
+
+        function process(json) {
+            const divs = document.querySelectorAll(".mask");
+            for (let i = 0; i < divs.length; i++) {
+                const p = json[divs[i].id];
+                if (p !== undefined) {
+                    divs[i].style.width = p;
+                }
+            }
+        }
+
+        function format(t) {
+            const h = Math.floor(t / 3600);
+            const m = Math.floor(t / 60 % 60);
+            const s = Math.floor(t % 60);
+            const n = ((t - Math.floor(t)).toFixed(9) + "").substring(2);
+            let t1 = (h < 10) ? '0' + h : h;
+            let t2 = (m < 10) ? '0' + m : m;
+            let t3 = (s < 10) ? '0' + s : s;
+            return t1 + ":" + t2 + ":" + t3;
+        }
+
+        function readBlob(video) {
+            return new Promise((resolve, reject) =>{
+                const canvas = document.createElement("canvas");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext("2d").drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+                canvas.toBlob(r=>{
+                    resolve(r);
+                });
+            })
+        }
+
+        function readVideo(file) {
+            return new Promise((resolve, reject) => {
+                const video = document.createElement("video");
+                const url = URL.createObjectURL(file);
+                video.onloadeddata = () => {
+                    resolve(video);
+                }
+                video.onerror = reject;
+                video.setAttribute("preload", "auto");
+                video.src = url;
+            })
+        }
+
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                let reader = new FileReader();
+
+                reader.onload = () => {
+                    resolve(reader.result);
+                };
+
+                reader.onerror = reject;
+
+                reader.readAsArrayBuffer(file);
+            })
+        }
+
+        async function upload(data, i, chunks, part) {
+            const form = new FormData();
+            form.append("data", data);
+            form.append("i", i);
+            form.append("chunks", chunks);
+            form.append("url", part.url);
+
+            const resp = await fetch("http://localhost:8080/upload", {
+                method: "post",
+                body: form
+            })
+            return await resp.json();
+        }
+
+        async function uploadCover(data, cover) {
+            const form = new FormData();
+            form.append("data", data);
+            form.append("cover", cover);
+
+            const resp = await fetch("http://localhost:8080/uploadCover", {
+                method: "post",
+                body: form
+            })
+            return await resp.json();
+        }
+
+        const inputTag = document.getElementById("inputTag");
+        const tags = document.getElementById("tags");
+        const tagSet = new Set();
+        inputTag.onkeyup = e => {
+            if (e.keyCode === 13 && inputTag.value.length > 0) {
+                tagSet.add(inputTag.value);
+                inputTag.value = "";
+                tags.value = Array.from(tagSet).join("_");
+            }
+        }
+
+        publish.onclick = async e => {
+            let formdata = new FormData(document.getElementById("form"));
+            let obj = Object.fromEntries(formdata.entries());
+            obj.playList = parts;
+            let resp = await fetch("http://localhost:8080/publish", {
+                method: "post",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept:"application/json"
+                },
+                body: JSON.stringify(obj)
+            });
+            const json = await resp.json();
+            document.location.href = "http://localhost:8080/video.html#" + json.bv;
+        }
+    </script>
+</body>
+
+</html>

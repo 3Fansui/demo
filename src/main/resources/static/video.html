@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>视频</title>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.2/plyr.css"/>
+    <style>
+        .video-title {
+            font-size: 20px;
+            font-family: PingFang SC, HarmonyOS_Regular, Helvetica Neue, Microsoft YaHei, sans-serif;
+            font-weight: 500;
+            -webkit-font-smoothing: antialiased;
+            color: #18191C;
+            line-height: 24px;
+            margin-bottom: 6px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .video-data {
+            font-size: 13px;
+            color: #9499A0;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            height: 24px;
+            line-height: 18px;
+        }
+        .view,.dm,.pudate {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 12px;
+        }
+
+        .video-container-v1 {
+            max-width: 2540px;
+            min-width: 1080px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            box-sizing: content-box;
+            flex-direction: row;
+        }
+        .video-left {
+            width: 668px;
+        }
+        .video-right {
+            width: 350px;
+        }
+
+        .list-box {
+            padding: 0 6px;
+            margin: 0;
+        }
+        ol, ul {
+            list-style: none;
+            outline: none;
+        }
+        .list-box li .link-content {
+            display: flex;
+            align-items: center;
+            flex-shrink: 1;
+            overflow: hidden;
+        }
+        .list-box li .clickitem {
+            display: flex;
+            justify-content: space-between;
+            overflow: hidden;
+            width: 100%;
+        }
+        .list-box li {
+            display: block;
+            height: 30px;
+            line-height: 30px;
+            padding: 0 10px;
+            color: #18191C;
+            margin: 5px 0;
+            transition: all 0.3s;
+            border-radius: 2px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            font-size: 13px;
+            width: 308px;
+            box-sizing: border-box;
+        }
+        a {
+            color: #222;
+            background-color: transparent;
+            text-decoration: none;
+            outline: none;
+            cursor: pointer;
+            transition: color .3s;
+        }
+        .desc-info {
+            transition: all 0.3s;
+            white-space: pre-line;
+            transition: height 0.3s;
+            font-size: 15px;
+            color: #18191C;
+            letter-spacing: 0;
+            line-height: 24px;
+            overflow: hidden;
+        }
+        .s_tag-v1 {
+            padding-bottom: 6px;
+            margin: 16px 0 20px 0;
+            border-bottom: 1px solid #E3E5E7;
+            height: 40px;
+        }
+
+        .s_tag-v1 .tag-wrap {
+            transition: height 0.3s;
+        }
+
+        .s_tag-v1 .tag-wrap .tag-area {
+            position: relative;
+            padding: 0;
+        }
+
+        .s_tag-v1 .tag-wrap .tag-area > li {
+            float: left;
+            margin: 0 12px 8px 0;
+            position: relative;
+        }
+
+        .s_tag-v1 .tag-wrap .tag-area > li .tag-link {
+            color: #61666D;
+            z-index: 10;
+            height: 28px;
+            line-height: 28px;
+            display: inline-block;
+            font-size: 13px;
+            padding: 0 12px;
+            box-sizing: border-box;
+            background: #F1F2F3;
+            border-radius: 100px;
+            transition: all 0.3s;
+        }
+
+        .cur-list {
+            padding: 4px 0;
+            transition: all 0.3s;
+            /*max-height: 340px;
+            overflow: hidden;*/
+        }
+
+        .list-box {
+            padding: 0 6px;
+        }
+
+        .list-box li {
+            width: 338px;
+        }
+
+        .list-box li .page-num {
+            margin-right: 10px;
+        }
+
+        .list-box li .clickitem {
+            display: flex;
+            justify-content: space-between;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .list-box li .part {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-shrink: 1;
+            width: 308px;
+        }
+
+        .list-box li .duration {
+            color: #9499A0;
+            justify-self: flex-end;
+        }
+
+        li.on a {
+            color: #00AEEC;
+        }
+        .head-con {
+            width: 350px;
+            display: flex;
+            padding: 14px 16px 0;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .head-con .head-left {
+            display: flex;
+            align-items: center;
+        }
+        .head-con .head-left h3 {
+            font-size: 15px;
+            line-height: 20px;
+            font-family: PingFang SC, HarmonyOS_Regular, Helvetica Neue, Microsoft YaHei, sans-serif;
+            font-weight: 500;
+            -webkit-font-smoothing: antialiased;
+            margin-right: 4px;
+            color: #18191C;
+        }
+        .head-con .head-left .cur-page {
+            font-size: 12px;
+            color: #9499A0;
+            line-height: 16px;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <div class="video-container-v1">
+        <div class="video-left">
+            <h1 class="video-title"></h1>
+            <div class="video-data">
+                <span title="总播放数34158" class="view item">
+                    <svg viewBox="0 0 400 400" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                        <g id="Layer_1">
+                          <rect id="svg_1" height="250" width="300" y="75" x="50" stroke-width="20" stroke="#000"
+                                fill="#84D3DB"/>
+                          <line id="svg_3" y2="265" x2="138" y1="135" x1="138" stroke-width="20" stroke="#000" fill="none"/>
+                          <line stroke="#000" id="svg_4" y2="199.50001" x2="268" y1="141.50001" x1="142" stroke-width="20" fill="none"/>
+                          <line stroke="#000" id="svg_5" y2="200.33403" x2="268" y1="260.66597" x1="138" stroke-width="20" fill="none"/>
+                        </g>
+                    </svg>3.4万</span>
+                <span title="历史累计弹幕数235" class="dm item">
+                    <svg viewBox="0 0 400 400" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                        <g id="Layer_2">
+                            <rect fill="#84D3DB" stroke="#000" stroke-width="20" x="50" y="75" width="300" height="250" id="svg_1"/>
+                            <line stroke="#000" id="svg_2" y2="140" x2="285.00147" y1="140" x1="147" stroke-width="20" fill="none"/>
+                            <line stroke="#000" id="svg_3" y2="200" x2="309.00147" y1="200" x1="171" stroke-width="20" fill="none"/>
+                            <line stroke="#000" id="svg_4" y2="260" x2="285.00147" y1="260" x1="147" stroke-width="20" fill="none"/>
+                            <line stroke="#000" id="svg_5" y2="140" x2="130" y1="140" x1="110" stroke-width="20" fill="none"/>
+                            <line stroke="#000" id="svg_6" y2="260" x2="130" y1="260" x1="110" stroke-width="20" fill="none"/>
+                            <line stroke="#000" id="svg_7" y2="200" x2="154" y1="200" x1="134" stroke-width="20" fill="none"/>
+                        </g>
+                    </svg>235</span>
+                <span title="发布时间" class="pudate item">
+                    <svg viewBox="0 0 400 400" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                        <g id="Layer_3">
+                            <ellipse stroke="#000" stroke-width="20" ry="130" rx="170" id="svg_1" cy="200" cx="200" fill="#84D3DB"/>
+                            <line stroke-width="20" id="svg_3" y2="200" x2="200" y1="100" x1="200" stroke="#000" fill="none"/>
+                            <line stroke-width="20" id="svg_5" y2="267.01794" x2="283.71392" y1="201" x1="200" fill="none" stroke="#000"/>
+                        </g>
+                    </svg><span></span></span>
+            </div>
+            <video id="player" playsinline controls data-poster="" style="width:100%">
+                <!--<source src="/a-b顺序.mp4" type="video/mp4"/>-->
+
+                <!-- Captions are optional
+                <track kind="captions" label="English captions" src="/path/to/captions.vtt" srclang="en" default/>
+                 -->
+            </video>
+            <div class="desc-info desc-v2" style="height: auto;"><span class="desc-info-text"></span></div>
+            <div id="v_tag" class="s_tag-v1" data-v-066e89c8="">
+                <div class="tag-wrap">
+                    <ul class="tag-area clearfix"></ul>
+                </div>
+            </div>
+        </div>
+        <div class="video-right">
+            <div class="head-con">
+                <div class="head-left"><h3>视频选集</h3><span class="cur-page">(0/0)</span>
+                    <div class="range-box"><i class="van-icon-general_viewlist"></i><!----></div>
+                </div>
+                <div class="head-right">
+<!--                    <span class="next-button"><span class="txt">自动连播</span><span class="switch-button on"></span></span>-->
+                </div>
+            </div>
+            <div class="cur-list">
+                <ul style="display:none;">
+                    <li id="template"><a href="/video/BV15T4y1e7Zq?p=1" class="" title="">
+                        <div class="clickitem">
+                            <div class="link-content">
+                                <svg viewBox="0 0 400 400" width="30" height="30" xmlns="http://www.w3.org/2000/svg">
+                                    <g>
+                                        <line class="p1" y2="215" x2="100" y1="185" x1="100" stroke-width="30" stroke="#84D3DB" fill="none"/>
+                                        <line class="p2" y2="215" x2="200" y1="185" x1="200" stroke-width="30" stroke="#84D3DB" fill="none"/>
+                                        <line class="p3" y2="215" x2="300" y1="185" x1="300" stroke-width="30" stroke="#84D3DB" fill="none"/>
+                                    </g>
+                                </svg>
+                                <span class="page-num"></span><span class="part"></span>
+                            </div>
+                            <div class="duration"></div>
+                        </div>
+                    </a></li>
+                </ul>
+                <ul class="list-box"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="js/common.js"></script>
+<script src="js/plyr.js"></script>
+<script src="js/gsap.min.js"></script>
+<script>
+    let tlArray = [];
+    let liArray = [];
+    let urlArray = [];
+    let currentPlayer;
+    function loadData() {
+        const bv = location.hash.substr(1);
+        if(bv) {
+            fetch(host + "/video/" + bv)
+                .then(resp=>resp.json())
+                .then(video=>{
+                    tlArray = [];
+                    liArray = [];
+                    urlArray = [];
+                    const listUl = document.querySelector(".list-box");
+                    listUl.innerHTML = "";
+                    const ul = document.querySelector(".tag-area");
+                    ul.innerHTML = "";
+
+                    document.title = video.title;
+                    document.querySelector(".video-title").innerText = video.title;
+                    document.querySelector(".pudate span").innerText = new Date(video.publishTime);
+                    document.querySelector(".desc-info-text").innerText = video.introduction;
+                    if(currentPlayer == null) {
+                        //document.querySelector("#player").dataset.poster = "/img/" + video.cover;
+                        currentPlayer = new Plyr('#player');
+                    }
+                    // <li class="tag"><a href="//www.bilibili.com/v/tech/" target="_blank" class="tag-link">科技</a></li>
+                    let tags = video.tagList;
+                    for(let i = 0; i < tags.length; i++) {
+                        const li = document.createElement("li");
+                        li.className = "tag";
+                        const a = document.createElement("a");
+                        a.className = "tag-link";
+                        a.innerText = tags[i];
+                        li.appendChild(a);
+                        ul.appendChild(li);
+                    }
+
+                    let playList = video.playList;
+
+                    for(let i = 0; i < playList.length; i++) {
+                        let play = playList[i];
+                        let title = play.title;
+                        //title = title.substring(0, title.lastIndexOf("."));
+                        const li = document.querySelector("#template").cloneNode(true);
+                        li.removeAttribute("id");
+                        const a = li.querySelector("a");
+                        a.href = `javascript:void(0)`;
+                        a.title = title;
+                        a.dataset.i = i;
+                        a.onclick = function() {
+                            liArray.forEach(l=>l.className="");
+                            liArray[this.dataset.i].className="on";
+                            tlArray.forEach(t=>t.pause(0));
+                            tlArray[this.dataset.i].resume();
+                            document.querySelector(".cur-page").innerText = `${this.dataset.i-0+1}/${playList.length}`;
+                            currentPlayer.source = {
+                              type: 'video',
+                              sources: [
+                                {
+                                  src: '/play/' + urlArray[this.dataset.i],
+                                  type: 'video/mp4',
+                                }
+                              ]
+                            };
+                        };
+                        li.querySelector(".page-num").innerText = play.id;
+                        li.querySelector(".part").innerText = title;
+                        li.querySelector(".duration").innerText = play.duration;
+
+                        const svg = li.querySelector("svg");
+                        let lines = [svg.querySelector(".p1"),svg.querySelector(".p2"),svg.querySelector(".p3")];
+                        let tl = gsap.timeline({repeat: -1});
+                        tl.to(lines, {
+                          duration: .5,
+                          scaleY: 8,
+                          transformOrigin: "center",
+                          stagger: .1
+                        })
+                        tl.to(lines, {
+                          duration: .5,
+                          scaleY: 1,
+                          transformOrigin: "center",
+                          stagger: .1
+                        })
+                        tl.pause();
+                        tlArray.push(tl);
+                        liArray.push(li);
+                        urlArray.push(play.url);
+                        listUl.appendChild(li);
+                    }
+                    if(liArray.length > 0) {
+                        liArray[0].className="on";
+                        tlArray[0].resume();
+                        document.querySelector(".cur-page").innerText = `1/${playList.length}`;
+                    }
+                    currentPlayer.source = {
+                      type: 'video',
+                      sources: [
+                        {
+                          src: '/play/' + urlArray[0],
+                          type: 'video/mp4'
+                        }
+                      ],
+                      poster: '/img/' + video.cover
+                    };
+                });
+        }
+    }
+
+    window.addEventListener('load', loadData, false);
+
+    window.addEventListener('hashchange', loadData, false);
+
+
+
+
+
+</script>
+</body>
+</html>
