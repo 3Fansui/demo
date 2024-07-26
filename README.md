@@ -28,11 +28,12 @@
 
 在 `src/main/resources/application.properties` 文件中，您需要根据自己的环境修改以下配置：
 
-``properties
+```properties
 # 数据库配置
 spring.datasource.url=jdbc:mysql://localhost:3306/your_database_name
 spring.datasource.username=your_database_username
 spring.datasource.password=your_database_password
+
 
 # 视频文件存储路径
 video-path=d:\\aaa\\
